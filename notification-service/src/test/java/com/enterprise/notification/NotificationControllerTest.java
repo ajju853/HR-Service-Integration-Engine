@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,8 +20,12 @@ class NotificationControllerTest {
 
     @Test
     void sendEmail_shouldReturnSent() {
-        ResponseEntity<Map<String, Object>> response = controller.sendEmail(
-                Map.of("to", "test@example.com", "subject", "Test", "body", "Hello"));
+        Map<String, Object> input = new HashMap<>();
+        input.put("to", "test@example.com");
+        input.put("subject", "Test");
+        input.put("body", "Hello");
+
+        ResponseEntity<Map<String, Object>> response = controller.sendEmail(input);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("sent", response.getBody().get("status"));
         assertEquals("email", response.getBody().get("channel"));
@@ -28,8 +33,10 @@ class NotificationControllerTest {
 
     @Test
     void sendSms_shouldReturnSent() {
-        ResponseEntity<Map<String, Object>> response = controller.sendSms(
-                Map.of("to", "+911234567890"));
+        Map<String, Object> input = new HashMap<>();
+        input.put("to", "+911234567890");
+
+        ResponseEntity<Map<String, Object>> response = controller.sendSms(input);
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("sent", response.getBody().get("status"));
         assertEquals("sms", response.getBody().get("channel"));
