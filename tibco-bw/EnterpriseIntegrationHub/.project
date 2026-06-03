@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+  <name>EnterpriseIntegrationHub</name>
+  <comment>TIBCO BusinessWorks Service Orchestration Module</comment>
+  <projects/>
+  <buildSpec>
+    <buildCommand>
+      <name>com.tibco.plugin.build.bwprojectbuilder</name>
+      <arguments/>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>com.tibco.plugin.bwprojectnature</nature>
+  </natures>
+</projectDescription>

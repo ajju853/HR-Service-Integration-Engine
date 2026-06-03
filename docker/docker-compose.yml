@@ -8,8 +8,7 @@ services:
       POSTGRES_DB: integration_hub
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -18,48 +17,60 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks: [hub-net]
 
   employee-service:
-    build: ../employee-service
+    build:
+      context: ../employee-service
+      dockerfile: Dockerfile
     container_name: employee-service
     ports: ["8081:8081"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-    depends_on:
-      postgres: { condition: service_healthy }
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [hub-net]
 
   payroll-service:
-    build: ../payroll-service
+    build:
+      context: ../payroll-service
+      dockerfile: Dockerfile
     container_name: payroll-service
     ports: ["8082:8082"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-    depends_on:
-      postgres: { condition: service_healthy }
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [hub-net]
 
   attendance-service:
-    build: ../attendance-service
+    build:
+      context: ../attendance-service
+      dockerfile: Dockerfile
     container_name: attendance-service
     ports: ["8083:8083"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-    depends_on:
-      postgres: { condition: service_healthy }
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [hub-net]
 
   notification-service:
-    build: ../notification-service
+    build:
+      context: ../notification-service
+      dockerfile: Dockerfile
     container_name: notification-service
     ports: ["8084:8084"]
     depends_on: [postgres]
+    networks: [hub-net]
 
   gateway:
-    build: ../gateway
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
     container_name: api-gateway
     ports: ["8085:8085"]
     depends_on:
@@ -67,12 +78,16 @@ services:
       - payroll-service
       - attendance-service
       - notification-service
+    networks: [hub-net]
 
   auth-service:
-    build: ../auth-service
+    build:
+      context: ../auth-service
+      dockerfile: Dockerfile
     container_name: auth-service
     ports: ["8086:8086"]
     depends_on: [postgres]
+    networks: [hub-net]
 
   hr-portal:
     image: node:18-alpine
@@ -83,6 +98,11 @@ services:
     ports: ["3000:3000"]
     command: sh -c "npm install && npm start"
     depends_on: [gateway]
+    networks: [hub-net]
+
+networks:
+  hub-net:
+    driver: bridge
 
 volumes:
   postgres_data:

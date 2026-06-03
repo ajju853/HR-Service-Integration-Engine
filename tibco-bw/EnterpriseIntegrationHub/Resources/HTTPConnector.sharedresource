@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sharedResource:sharedResource
+    xmlns:sharedResource="http://www.tibco.com/bw/model/sharedresource"
+    name="HTTPConnector" type="bw:httpConnector">
+  <properties>
+    <property name="port" value="8080"/>
+    <property name="maxConnections" value="100"/>
+    <property name="connectionTimeout" value="5000"/>
+    <property name="receiveTimeout" value="10000"/>
+    <property name="tlsEnabled" value="false"/>
+  </properties>
+</sharedResource:sharedResource>

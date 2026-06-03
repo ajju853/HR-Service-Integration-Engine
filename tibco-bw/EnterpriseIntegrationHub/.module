@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module:module xmlns:module="http://www.tibco.com/bw/model/sharedresource/module"
+               moduleName="EnterpriseIntegrationHub"
+               moduleVersion="1.0.0"
+               deployPrefix="EnterpriseIntegrationHub"
+               defaultPackage="com.enterprise.hub">
+  <dependencies/>
+  <sharedResources>
+    <resource>Resources/HTTPConnector.sharedresource</resource>
+    <resource>Resources/JDBCConnector.sharedresource</resource>
+  </sharedResources>
+</module:module>

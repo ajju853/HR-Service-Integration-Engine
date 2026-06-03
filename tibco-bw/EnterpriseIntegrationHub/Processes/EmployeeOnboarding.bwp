@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process:process xmlns:process="http://www.tibco.com/bw/model/process"
+                 xmlns:activity="http://www.tibco.com/bw/model/activity"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 name="EmployeeOnboarding" displayName="Employee Onboarding"
+                 startEvent="Start" endEvent="End"
+                 version="1.0">
+
+  <processVariables>
+    <variable name="requestPayload" type="xsd:string"/>
+    <variable name="employeeId" type="xsd:string"/>
+    <variable name="employeeCreated" type="xsd:boolean"/>
+    <variable name="payrollCreated" type="xsd:boolean"/>
+    <variable name="attendanceCreated" type="xsd:boolean"/>
+    <variable name="notificationSent" type="xsd:boolean"/>
+    <variable name="errorMessage" type="xsd:string"/>
+    <variable name="employeeEmail" type="xsd:string"/>
+    <variable name="employeeSalary" type="xsd:decimal"/>
+  </processVariables>
+
+  <!-- ====== Step 1: HTTP Receiver ====== -->
+  <activity:activity name="Start" type="bw:httpReceiver"
+                     displayName="HTTP Receiver">
+    <property name="resource" value="Resources/HTTPConnector.sharedresource"/>
+    <property name="uri" value="/api/onboard-employee"/>
+    <property name="method" value="POST"/>
+    <property name="outputVariable" value="requestPayload"/>
+  </activity:activity>
+
+  <!-- ====== Step 2: Validate Input ====== -->
+  <activity:activity name="ValidateInput" type="bw:javaSnippet"
+                     displayName="Validate Input">
+    <property name="script"><![CDATA[
+      // Validate mandatory fields
+      String name = requestPayload.name;
+      String email = requestPayload.email;
+      String dept = requestPayload.department;
+      if (name == null || email == null || dept == null) {
+        errorMessage = "Missing required fields";
+        process.setTransition("ValidateInput", "ErrorEnd");
+      }
+      if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        errorMessage = "Invalid email format";
+        process.setTransition("ValidateInput", "ErrorEnd");
+      }
+      employeeEmail = email;
+      employeeSalary = requestPayload.salary;
+    ]]></property>
+  </activity:activity>
+
+  <!-- ====== Step 3: REST Client - Create Employee ====== -->
+  <activity:activity name="CreateEmployee" type="bw:restClient"
+                     displayName="Create Employee">
+    <property name="httpResource" value="Resources/HTTPConnector.sharedresource"/>
+    <property name="endpoint" value="http://localhost:8081/employees"/>
+    <property name="method" value="POST"/>
+    <property name="requestBody">
+      <json>
+        <property name="name" ref="requestPayload.name"/>
+        <property name="email" ref="requestPayload.email"/>
+        <property name="department" ref="requestPayload.department"/>
+      </json>
+    </property>
+    <property name="responseVariable" value="employeeResponse"/>
+    <property name="successPath" value="CreatePayroll"/>
+    <property name="failurePath" value="EmployeeError"/>
+  </activity:activity>
+
+  <!-- ====== Step 4: REST Client - Create Payroll ====== -->
+  <activity:activity name="CreatePayroll" type="bw:restClient"
+                     displayName="Create Payroll">
+    <property name="httpResource" value="Resources/HTTPConnector.sharedresource"/>
+    <property name="endpoint" value="http://localhost:8082/payroll/create"/>
+    <property name="method" value="POST"/>
+    <property name="requestBody">
+      <json>
+        <property name="employeeId" ref="employeeId"/>
+        <property name="salary" ref="employeeSalary"/>
+      </json>
+    </property>
+    <property name="successPath" value="RegisterAttendance"/>
+    <property name="failurePath" value="PayrollError"/>
+  </activity:activity>
+
+  <!-- ====== Step 5: REST Client - Register Attendance ====== -->
+  <activity:activity name="RegisterAttendance" type="bw:restClient"
+                     displayName="Register Attendance">
+    <property name="endpoint" value="http://localhost:8083/attendance/register"/>
+    <property name="method" value="POST"/>
+    <property name="requestBody">
+      <json>
+        <property name="employeeId" ref="employeeId"/>
+        <property name="shift" value="GENERAL"/>
+      </json>
+    </property>
+    <property name="successPath" value="SendEmail"/>
+    <property name="failurePath" value="AttendanceError"/>
+  </activity:activity>
+
+  <!-- ====== Step 6: REST Client - Send Email ====== -->
+  <activity:activity name="SendEmail" type="bw:restClient"
+                     displayName="Send Welcome Email">
+    <property name="endpoint" value="http://localhost:8084/send-email"/>
+    <property name="method" value="POST"/>
+    <property name="requestBody">
+      <json>
+        <property name="to" ref="employeeEmail"/>
+        <property name="subject" value="Welcome to the company!"/>
+        <property name="body" value="Your Employee ID has been created."/>
+      </json>
+    </property>
+    <property name="successPath" value="AggregateResults"/>
+    <property name="failurePath" value="NotificationError"/>
+  </activity:activity>
+
+  <!-- ====== Step 7: Aggregate Results ====== -->
+  <activity:activity name="AggregateResults" type="bw:javaSnippet"
+                     displayName="Aggregate Results">
+    <property name="script"><![CDATA[
+      response = new java.util.HashMap();
+      response.put("employeeId", employeeId);
+      response.put("employeeCreated", true);
+      response.put("payrollCreated", true);
+      response.put("attendanceCreated", true);
+      response.put("notificationSent", true);
+    ]]></property>
+  </activity:activity>
+
+  <!-- ====== End ====== -->
+  <activity:activity name="End" type="bw:httpResponse"
+                     displayName="HTTP Response OK">
+    <property name="statusCode" value="200"/>
+    <property name="responseBody" ref="response"/>
+  </activity:activity>
+
+  <!-- ====== ERROR HANDLERS ====== -->
+
+  <!-- Employee Service Error -->
+  <activity:activity name="EmployeeError" type="bw:catch"
+                     displayName="Employee Service Error">
+    <property name="script"><![CDATA[
+      errorMessage = "Employee service unavailable";
+      employeeCreated = false;
+    ]]></property>
+  </activity:activity>
+  <activity:activity name="EmployeeErrorEnd" type="bw:httpResponse"
+                     displayName="Error Response">
+    <property name="statusCode" value="503"/>
+    <property name="responseBody">
+      <json>
+        <property name="status" value="failed"/>
+        <property name="message" ref="errorMessage"/>
+      </json>
+    </property>
+  </activity:activity>
+
+  <!-- Payroll Error - Compensation -->
+  <activity:activity name="PayrollError" type="bw:catch"
+                     displayName="Payroll Service Error">
+    <property name="script"><![CDATA[
+      // Compensation: delete the created employee
+      compensationResult = RESTClient.delete("http://localhost:8081/employees/" + employeeId);
+      errorMessage = "Payroll creation failed — employee rolled back";
+      payrollCreated = false;
+    ]]></property>
+  </activity:activity>
+  <activity:activity name="PayrollErrorEnd" type="bw:httpResponse"
+                     displayName="Compensation Error Response">
+    <property name="statusCode" value="500"/>
+    <property name="responseBody">
+      <json>
+        <property name="status" value="failed"/>
+        <property name="reason" ref="errorMessage"/>
+      </json>
+    </property>
+  </activity:activity>
+
+  <!-- Attendance Error - Non-critical -->
+  <activity:activity name="AttendanceError" type="bw:catch"
+                     displayName="Attendance Error (Non-critical)">
+    <property name="script"><![CDATA[
+      log.warn("Attendance registration failed — continuing flow");
+      attendanceCreated = false;
+    ]]></property>
+    <property name="successPath" value="SendEmail"/>
+  </activity:activity>
+
+  <!-- Notification Error - Non-critical -->
+  <activity:activity name="NotificationError" type="bw:catch"
+                     displayName="Notification Error (Non-critical)">
+    <property name="script"><![CDATA[
+      log.warn("Email notification failed — continuing flow");
+      notificationSent = false;
+    ]]></property>
+    <property name="successPath" value="AggregateResults"/>
+  </activity:activity>
+
+  <!-- Global Error Handler -->
+  <activity:activity name="GlobalError" type="bw:catch"
+                     displayName="Global Error Handler">
+    <property name="script"><![CDATA[
+      errorMessage = "Unexpected error: " + exception.getMessage();
+    ]]></property>
+  </activity:activity>
+  <activity:activity name="GlobalErrorEnd" type="bw:httpResponse"
+                     displayName="Global Error Response">
+    <property name="statusCode" value="500"/>
+    <property name="responseBody">
+      <json>
+        <property name="status" value="error"/>
+        <property name="message" ref="errorMessage"/>
+      </json>
+    </property>
+  </activity:activity>
+
+  <!-- ====== Transitions ====== -->
+  <process:transition from="Start" to="ValidateInput"/>
+  <process:transition from="ValidateInput" to="CreateEmployee"/>
+  <process:transition from="ValidateInput" to="ErrorEnd" condition="errorMessage != null"/>
+  <process:transition from="CreateEmployee" to="CreatePayroll"/>
+  <process:transition from="CreateEmployee" to="EmployeeError" type="error"/>
+  <process:transition from="EmployeeError" to="EmployeeErrorEnd"/>
+  <process:transition from="CreatePayroll" to="RegisterAttendance"/>
+  <process:transition from="CreatePayroll" to="PayrollError" type="error"/>
+  <process:transition from="PayrollError" to="PayrollErrorEnd"/>
+  <process:transition from="RegisterAttendance" to="SendEmail"/>
+  <process:transition from="RegisterAttendance" to="AttendanceError" type="error"/>
+  <process:transition from="AttendanceError" to="SendEmail"/>
+  <process:transition from="SendEmail" to="AggregateResults"/>
+  <process:transition from="SendEmail" to="NotificationError" type="error"/>
+  <process:transition from="NotificationError" to="AggregateResults"/>
+  <process:transition from="AggregateResults" to="End"/>
+</process:process>

@@ -6,31 +6,45 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      default-filters:
+        - JwtAuthFilter
       routes:
         - id: auth-service
           uri: http://localhost:8086
           predicates:
             - Path=/auth/**
+          filters:
+            - JwtAuthFilter
         - id: tibco-bw
           uri: http://localhost:8080
           predicates:
             - Path=/api/**
+          filters:
+            - JwtAuthFilter
         - id: employee-service
           uri: http://localhost:8081
           predicates:
             - Path=/employees/**
+          filters:
+            - JwtAuthFilter
         - id: payroll-service
           uri: http://localhost:8082
           predicates:
             - Path=/payroll/**
+          filters:
+            - JwtAuthFilter
         - id: attendance-service
           uri: http://localhost:8083
           predicates:
             - Path=/attendance/**
+          filters:
+            - JwtAuthFilter
         - id: notification-service
           uri: http://localhost:8084
           predicates:
             - Path=/send-email, /send-sms
+          filters:
+            - JwtAuthFilter
 
 management:
   endpoints:

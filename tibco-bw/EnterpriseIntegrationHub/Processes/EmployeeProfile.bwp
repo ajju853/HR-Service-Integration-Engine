@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process:process xmlns:process="http://www.tibco.com/bw/model/process"
+                 xmlns:activity="http://www.tibco.com/bw/model/activity"
+                 name="EmployeeProfile" displayName="Employee Profile Query"
+                 startEvent="Start" endEvent="End" version="1.0">
+  <processVariables>
+    <variable name="employeeCode" type="xsd:string"/>
+    <variable name="employeeData" type="xsd:string"/>
+    <variable name="payrollData" type="xsd:string"/>
+    <variable name="attendanceData" type="xsd:string"/>
+  </processVariables>
+
+  <activity:activity name="Start" type="bw:httpReceiver" displayName="HTTP Receiver">
+    <property name="uri" value="/api/employee-profile/{employeeCode}"/>
+    <property name="method" value="GET"/>
+    <property name="pathParam" variable="employeeCode"/>
+  </activity:activity>
+  <activity:activity name="GetEmployee" type="bw:restClient" displayName="Get Employee">
+    <property name="endpoint" value="http://localhost:8081/employees/code/{employeeCode}"/>
+    <property name="method" value="GET"/>
+    <property name="responseVariable" value="employeeData"/>
+  </activity:activity>
+  <activity:activity name="GetPayroll" type="bw:restClient" displayName="Get Payroll">
+    <property name="endpoint" value="http://localhost:8082/payroll/{employeeData.id}"/>
+    <property name="method" value="GET"/>
+    <property name="responseVariable" value="payrollData"/>
+  </activity:activity>
+  <activity:activity name="GetAttendance" type="bw:restClient" displayName="Get Attendance">
+    <property name="endpoint" value="http://localhost:8083/attendance/{employeeData.id}"/>
+    <property name="method" value="GET"/>
+    <property name="responseVariable" value="attendanceData"/>
+  </activity:activity>
+  <activity:activity name="Aggregate" type="bw:javaSnippet" displayName="Merge Results">
+    <property name="script">
+      response = { "employee": employeeData, "payroll": payrollData, "attendance": attendanceData };
+    </property>
+  </activity:activity>
+  <activity:activity name="End" type="bw:httpResponse" displayName="HTTP Response">
+    <property name="statusCode" value="200"/>
+    <property name="responseBody" ref="response"/>
+  </activity:activity>
+
+  <process:transition from="Start" to="GetEmployee"/>
+  <process:transition from="GetEmployee" to="GetPayroll"/>
+  <process:transition from="GetPayroll" to="GetAttendance"/>
+  <process:transition from="GetAttendance" to="Aggregate"/>
+  <process:transition from="Aggregate" to="End"/>
+</process:process>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sharedResource:sharedResource
+    xmlns:sharedResource="http://www.tibco.com/bw/model/sharedresource"
+    name="JDBCConnector" type="bw:jdbcConnector">
+  <properties>
+    <property name="driverClass" value="org.postgresql.Driver"/>
+    <property name="connectionUrl" value="jdbc:postgresql://localhost:5432/integration_hub"/>
+    <property name="username" value="postgres"/>
+    <property name="password" value="postgres"/>
+    <property name="poolSize" value="10"/>
+  </properties>
+</sharedResource:sharedResource>
