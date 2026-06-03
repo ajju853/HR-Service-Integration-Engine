@@ -5,9 +5,11 @@
   <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/JWT-Security-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
+  <img src="https://img.shields.io/badge/CI-Passing-28a745?style=for-the-badge&logo=githubactions&logoColor=white" />
+  <img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=white" />
 </p>
 
-<h1 align="center">🏢 HR Service Integration Engine</h1>
+<h1 align="center">HR Service Integration Engine</h1>
 <p align="center"><strong>TIBCO BusinessWorks Service Orchestration — Enterprise Integration Demo</strong></p>
 
 <p align="center">
@@ -16,16 +18,25 @@
   <a href="#services">Services</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#quick-start">Quick Start</a> •
+  <a href="#screenshots">Screenshots</a> •
   <a href="#project-structure">Structure</a>
+</p>
+
+<br>
+
+<p align="center">
+  <a href="https://github.com/ajju853/HR-Service-Integration-Engine/actions"><img src="https://img.shields.io/github/actions/workflow/status/ajju853/HR-Service-Integration-Engine/.github%2Fworkflows%2Fci.yml?branch=main&label=CI%20Pipeline&logo=github" /></a>
 </p>
 
 ---
 
-## 📋 Overview
+## Overview
 
 The **HR Service Integration Engine** is a production-style enterprise integration project demonstrating **service orchestration** using TIBCO BusinessWorks Community Edition. It solves a real-world problem: multiple enterprise systems (HR, Payroll, Attendance, Notification) that don't communicate directly. TIBCO BW acts as the middleware integration layer, orchestrating a seamless **New Employee Onboarding** flow across 4 microservices.
 
 This project bridges the gap between **integration middleware** (TIBCO BW) and **modern microservices** (Spring Boot), wrapped in a React frontend with JWT security — exactly what enterprises run in production.
+
+> See [`docs/architecture.md`](docs/architecture.md) for the full sequence diagram, component architecture, and service URLs.
 
 ---
 
@@ -127,16 +138,16 @@ POST /api/onboard-employee
 
 ## 🛠️ Services
 
-| Service | Port | Technology | Key Endpoints |
-|---------|------|------------|---------------|
-| **HR Portal** | 3000 | React, TypeScript, MUI | `/login`, `/dashboard`, `/onboard` |
-| **API Gateway** | 8085 | Spring Cloud Gateway | Routes `/api/*`, `/auth/*`, `/*/employees/*` |
-| **TIBCO BW** | 8080 | TIBCO BusinessWorks CE | `POST /api/onboard-employee` |
-| **Auth Service** | 8086 | Spring Boot + JWT | `POST /auth/login` → Bearer token |
-| **Employee Service** | 8081 | Spring Boot + JPA | CRUD `/employees` |
-| **Payroll Service** | 8082 | Spring Boot + JPA | `POST /payroll/create`, `GET /payroll/{id}` |
-| **Attendance Service** | 8083 | Spring Boot + JPA | `POST /attendance/register`, `GET /attendance/{id}` |
-| **Notification Service** | 8084 | Spring Boot | `POST /send-email`, `POST /send-sms` |
+| Service | Port | Technology | Key Endpoints | Swagger UI |
+|---------|------|------------|---------------|------------|
+| **HR Portal** | 3000 | React, TypeScript, MUI | `/login`, `/dashboard`, `/onboard` | — |
+| **API Gateway** | 8085 | Spring Cloud Gateway | Routes `/api/*`, `/auth/*`, `/*/employees/*` | `/swagger-ui.html` |
+| **TIBCO BW** | 8080 | TIBCO BusinessWorks CE | `POST /api/onboard-employee` | — |
+| **Auth Service** | 8086 | Spring Boot + JWT | `POST /auth/login` → Bearer token | `/swagger-ui.html` |
+| **Employee Service** | 8081 | Spring Boot + JPA | CRUD `/employees` | `/swagger-ui.html` |
+| **Payroll Service** | 8082 | Spring Boot + JPA | `POST /payroll/create`, `GET /payroll/{id}` | `/swagger-ui.html` |
+| **Attendance Service** | 8083 | Spring Boot + JPA | `POST /attendance/register`, `GET /attendance/{id}` | `/swagger-ui.html` |
+| **Notification Service** | 8084 | Spring Boot | `POST /send-email`, `POST /send-sms` | `/swagger-ui.html` |
 
 ---
 
@@ -264,7 +275,23 @@ npm start    # Opens http://localhost:3000
 
 ---
 
-## 📁 Project Structure
+## Screenshots
+
+Visual proof of the working system. See `docs/screenshots/README.md` for capture instructions.
+
+| Screenshot | What It Shows |
+|-----------|---------------|
+| `login-page.png` | HR Portal login form with username/password fields |
+| `dashboard.png` | Dashboard with role badge, logout, Onboard + View cards |
+| `onboarding-success.png` | Success response with employeeId and all flags = true |
+| `employee-list.png` | Table of employees with codes, names, departments |
+| `postman-login.png` | Postman showing JWT token response from `/auth/login` |
+| `tibco-process.png` | TIBCO BW Studio — EmployeeOnboarding.process canvas |
+| `ci-green.png` | GitHub Actions — all 7 jobs passing green |
+
+---
+
+## Project Structure
 
 ```
 HR-Service-Integration-Engine/
@@ -321,20 +348,22 @@ HR-Service-Integration-Engine/
 ├── database/                     # PostgreSQL schema & seed data
 │   └── init.sql
 │
-├── docker/                       # Docker Compose + per-service Dockerfiles
-│   ├── docker-compose.yml        # 8 containers
-│   ├── Dockerfile.employee
-│   ├── Dockerfile.payroll
-│   ├── Dockerfile.attendance
-│   ├── Dockerfile.notification
-│   ├── Dockerfile.auth
-│   └── Dockerfile.gateway
+├── docker/                       # Docker Compose
+│   └── docker-compose.yml        # 8 containers (PostgreSQL, 6 services, frontend)
+├── employee-service/Dockerfile   # Multi-stage build
+├── payroll-service/Dockerfile
+├── attendance-service/Dockerfile
+├── notification-service/Dockerfile
+├── auth-service/Dockerfile
+├── gateway/Dockerfile
 │
 ├── postman/                      # API testing collection
 │   └── enterprise-integration-hub.postman_collection.json
 │
-├── docs/                         # TIBCO BW process specification
-│   └── tibco-bw-flow.md
+├── docs/                         # Architecture & process documentation
+│   ├── architecture.md           # Sequence diagram, component diagram, URLs
+│   ├── tibco-bw-flow.md          # TIBCO BW process specification
+│   └── screenshots/              # Visual proof (see README for capture guide)
 │
 ├── .github/workflows/            # CI/CD pipeline
 │   └── ci.yml                    # Matrix build + frontend build

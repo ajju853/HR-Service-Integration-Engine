@@ -26,3 +26,8 @@ dependency-reduced-pom.xml
 
 # Docker
 docker-compose.override.yml
+
+# Node
+node_modules/
+package-lock.json
+hr-portal/build/
