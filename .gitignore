@@ -1,0 +1,28 @@
+target/
+*.class
+*.jar
+*.war
+*.log
+*.iml
+.idea/
+*.swp
+*.swo
+*~
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+*.env.local
+
+# Maven
+log/
+dependency-reduced-pom.xml
+
+# Docker
+docker-compose.override.yml

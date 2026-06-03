@@ -1,0 +1,131 @@
+{
+  "info": {
+    "name": "HR Service Integration Engine - TIBCO BW",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Auth Service (port 8086)",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"hr.admin\",\"password\":\"password123\"}"},
+            "url": {"raw": "http://localhost:8086/auth/login", "host": ["http://localhost"], "port": "8086", "path": ["auth", "login"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Employee Service (port 8081)",
+      "item": [
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"name\":\"Priya Sharma\",\"email\":\"priya@example.com\",\"department\":\"Marketing\"}"},
+            "url": {"raw": "http://localhost:8081/employees", "host": ["http://localhost"], "port": "8081", "path": ["employees"]}
+          }
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {"method": "GET", "url": {"raw": "http://localhost:8081/employees/1", "host": ["http://localhost"], "port": "8081", "path": ["employees", "1"]}}
+        },
+        {
+          "name": "Get Employee by Code",
+          "request": {"method": "GET", "url": {"raw": "http://localhost:8081/employees/code/EMP1001", "host": ["http://localhost"], "port": "8081", "path": ["employees", "code", "EMP1001"]}}
+        },
+        {
+          "name": "Get All Employees",
+          "request": {"method": "GET", "url": {"raw": "http://localhost:8081/employees", "host": ["http://localhost"], "port": "8081", "path": ["employees"]}}
+        }
+      ]
+    },
+    {
+      "name": "3. Payroll Service (port 8082)",
+      "item": [
+        {
+          "name": "Create Payroll",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"employeeId\":1,\"salary\":800000}"},
+            "url": {"raw": "http://localhost:8082/payroll/create", "host": ["http://localhost"], "port": "8082", "path": ["payroll", "create"]}
+          }
+        },
+        {
+          "name": "Get Payroll",
+          "request": {"method": "GET", "url": {"raw": "http://localhost:8082/payroll/1", "host": ["http://localhost"], "port": "8082", "path": ["payroll", "1"]}}
+        }
+      ]
+    },
+    {
+      "name": "4. Attendance Service (port 8083)",
+      "item": [
+        {
+          "name": "Register Attendance",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"employeeId\":1,\"shift\":\"GENERAL\"}"},
+            "url": {"raw": "http://localhost:8083/attendance/register", "host": ["http://localhost"], "port": "8083", "path": ["attendance", "register"]}
+          }
+        },
+        {
+          "name": "Get Attendance",
+          "request": {"method": "GET", "url": {"raw": "http://localhost:8083/attendance/1", "host": ["http://localhost"], "port": "8083", "path": ["attendance", "1"]}}
+        }
+      ]
+    },
+    {
+      "name": "5. Notification Service (port 8084)",
+      "item": [
+        {
+          "name": "Send Email",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"to\":\"ajim@gmail.com\",\"subject\":\"Welcome\",\"body\":\"Your Employee ID is EMP1001\"}"},
+            "url": {"raw": "http://localhost:8084/send-email", "host": ["http://localhost"], "port": "8084", "path": ["send-email"]}
+          }
+        },
+        {
+          "name": "Send SMS",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"to\":\"+911234567890\",\"message\":\"Welcome to the company!\"}"},
+            "url": {"raw": "http://localhost:8084/send-sms", "host": ["http://localhost"], "port": "8084", "path": ["send-sms"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. TIBCO BW Orchestration (via Gateway :8085)",
+      "item": [
+        {
+          "name": "Onboard Employee (Full Flow)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer <token>"}
+            ],
+            "body": {"mode": "raw", "raw": "{\"name\":\"Priya Sharma\",\"email\":\"priya@example.com\",\"department\":\"Engineering\",\"salary\":750000}"},
+            "url": {"raw": "http://localhost:8085/api/onboard-employee", "host": ["http://localhost"], "port": "8085", "path": ["api", "onboard-employee"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Health Checks",
+      "item": [
+        {"name": "Gateway", "request": {"method": "GET", "url": {"raw": "http://localhost:8085/actuator/health", "host": ["http://localhost"], "port": "8085", "path": ["actuator", "health"]}}},
+        {"name": "Auth", "request": {"method": "GET", "url": {"raw": "http://localhost:8086/actuator/health", "host": ["http://localhost"], "port": "8086", "path": ["actuator", "health"]}}}
+      ]
+    }
+  ]
+}

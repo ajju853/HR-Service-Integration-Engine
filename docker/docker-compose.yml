@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: integration-db
+    environment:
+      POSTGRES_DB: integration_hub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  employee-service:
+    build: ../employee-service
+    container_name: employee-service
+    ports: ["8081:8081"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  payroll-service:
+    build: ../payroll-service
+    container_name: payroll-service
+    ports: ["8082:8082"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  attendance-service:
+    build: ../attendance-service
+    container_name: attendance-service
+    ports: ["8083:8083"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/integration_hub
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  notification-service:
+    build: ../notification-service
+    container_name: notification-service
+    ports: ["8084:8084"]
+    depends_on: [postgres]
+
+  gateway:
+    build: ../gateway
+    container_name: api-gateway
+    ports: ["8085:8085"]
+    depends_on:
+      - employee-service
+      - payroll-service
+      - attendance-service
+      - notification-service
+
+  auth-service:
+    build: ../auth-service
+    container_name: auth-service
+    ports: ["8086:8086"]
+    depends_on: [postgres]
+
+  hr-portal:
+    image: node:18-alpine
+    container_name: hr-portal
+    working_dir: /app
+    volumes:
+      - ../hr-portal:/app
+    ports: ["3000:3000"]
+    command: sh -c "npm install && npm start"
+    depends_on: [gateway]
+
+volumes:
+  postgres_data:
