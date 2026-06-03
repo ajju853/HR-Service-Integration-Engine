@@ -38,6 +38,19 @@ This project bridges the gap between **integration middleware** (TIBCO BW) and *
 
 > See [`docs/architecture.md`](docs/architecture.md) for the full sequence diagram, component architecture, and service URLs.
 
+### Key Features
+
+- **JWT Authentication & Authorization** — Stateless Bearer token auth via Spring Security + jjwt
+- **TIBCO BW Service Orchestration** — 7-step employee onboarding process with compensation
+- **API Gateway Routing** — Spring Cloud Gateway with JWT validation on every request
+- **Swagger/OpenAPI Documentation** — `/swagger-ui.html` on all 6 backend services
+- **Dockerized Deployment** — 8 containers orchestrated via Docker Compose
+- **PostgreSQL Persistence** — Employees, payroll, and attendance tables with seed data
+- **GitHub Actions CI/CD** — Matrix build across all services + frontend, passing green
+- **Centralized Error Handling** — `@ControllerAdvice` + TIBCO BW catch blocks
+- **Compensation Transaction Pattern** — Rollback on payroll failure (delete created employee)
+- **Graceful Degradation** — Non-critical failures (attendance, notification) log and continue
+
 ---
 
 ## 🏗️ Architecture
@@ -192,32 +205,29 @@ Response:
 
 | Scenario | TIBCO BW Action | HTTP Response |
 |----------|----------------|---------------|
-| **Payroll Service down** | Compensation: delete employee record | `{ "status": "failed", "reason": "Payroll creation failed" }` |
-| **Employee Service down** | Retry (2x, 1s interval) → fail | `{ "status": "error", "message": "Service unavailable" }` |
+| **Payroll Service fails** | Compensation: delete employee record | `{ "status": "failed", "reason": "Payroll creation failed" }` |
+| **Employee Service fails** | Return error to caller | `{ "status": "error", "message": "Employee service unavailable" }` |
 | **Email notification fails** | Log warning, continue flow | `{ "notificationSent": false }` — partial success |
 | **Attendance fails** | Log & continue (non-critical) | `{ "attendanceCreated": false }` — partial success |
 | **Invalid input** | Validate early in Java Snippet | HTTP 400 with validation message |
 | **Duplicate email** | Check before create | HTTP 409 `{ "status": "failed", "message": "Email already exists" }` |
-| **Request timeout (>5s)** | Abort process | HTTP 504 `{ "status": "error", "message": "Request timed out" }` |
 
 ### TIBCO BW Fault Handling Features Demonstrated
-- Try/Catch blocks per downstream call
-- Retry logic with configurable intervals
+- Catch blocks per downstream service call
 - Compensation/rollback transactions
 - Global error handler for unhandled exceptions
 - Graceful degradation (partial success responses)
 
 ---
 
-## 📊 Monitoring
+## Monitoring
 
 | Tool | What It Monitors |
 |------|-----------------|
-| **Spring Boot Actuator** | Health, metrics, info per service |
-| **TIBCO BW Admin Console** | Running/pending/failed process instances |
+| **Spring Boot Actuator** | Health, metrics, info per service (e.g. `/actuator/health`) |
 | **Gateway Actuator** | Route status, latency per route |
 | **Application Logs** | `[Request Received → Employee Created → Payroll Created → Attendance Created → Email Sent → Completed]` |
-| **Postman** | Manual endpoint testing |
+| **Postman** | Manual endpoint testing with collection included |
 
 ---
 
@@ -387,20 +397,19 @@ GitHub Push → GitHub Actions → Build (Matrix: 6 Java services)
 
 ---
 
-## 📚 TIBCO BW Concepts Demonstrated
+## TIBCO BW Concepts Demonstrated
 
 | Concept | Implementation |
 |---------|---------------|
-| **Service Orchestration** | Chained HTTP calls with data passing |
+| **Service Orchestration** | Chained HTTP calls with data passing across 4 services |
 | **REST Integration** | HTTP Receiver + REST Client palette items |
-| **XML ↔ JSON Transformation** | XML Parse + JSON Transform palette items |
-| **Process Flow Design** | Sequential + parallel branching |
+| **Process Flow Design** | Sequential orchestration with error branches |
 | **Fault Handling** | Catch blocks per service call |
 | **Compensation Logic** | Rollback on payroll failure (delete employee) |
 | **Global Error Handling** | Top-level Catch for unhandled exceptions |
-| **Process Monitoring** | TIBCO BW Admin Console |
-| **Shared Resources** | HTTP connection pooling, JDBC connections |
-| **Enterprise Integration Patterns** | Aggregator, Router, Retry, Circuit Breaker |
+| **Shared Resources** | HTTPConnector shared resource |
+| **Aggregator Pattern** | Composite response assembled from multiple service results |
+| **Graceful Degradation** | Non-critical failures logged; flow continues |
 
 ---
 
