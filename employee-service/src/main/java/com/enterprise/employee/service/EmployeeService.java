@@ -2,6 +2,7 @@ package com.enterprise.employee.service;
 
 import com.enterprise.employee.model.Employee;
 import com.enterprise.employee.repository.EmployeeRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,10 +14,26 @@ import java.util.concurrent.atomic.AtomicLong;
 public class EmployeeService {
 
     private final EmployeeRepository repository;
-    private final AtomicLong counter = new AtomicLong(1001);
+    private final AtomicLong counter = new AtomicLong(1);
 
     public EmployeeService(EmployeeRepository repository) {
         this.repository = repository;
+    }
+
+    @PostConstruct
+    void initCounter() {
+        List<Employee> all = repository.findAll();
+        long max = all.stream()
+                .mapToLong(e -> {
+                    try {
+                        return Long.parseLong(e.getEmployeeCode().replace("EMP", ""));
+                    } catch (Exception ex) {
+                        return 0;
+                    }
+                })
+                .max()
+                .orElse(0);
+        counter.set(max + 1);
     }
 
     public List<Employee> getAll() { return repository.findAll(); }
