@@ -42,7 +42,7 @@ export const onboardEmployee = async (data: {
 };
 
 export const getEmployees = async () => {
-  const res = await api.get('/employees');
+  const res = await api.get('/api/employees');
   return res.data;
 };
 
