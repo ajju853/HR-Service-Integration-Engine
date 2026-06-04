@@ -12,35 +12,41 @@ spring:
         - id: auth-service
           uri: http://localhost:8086
           predicates:
-            - Path=/auth/login
+            - Path=/auth/**
           filters:
             - name: JwtAuthFilter
               args:
-                publicPath: true
-        - id: tibco-bw
-          uri: http://localhost:8080
-          predicates:
-            - Path=/api/**
+                publicPath: /auth/login
         - id: employee-service
           uri: http://localhost:8081
           predicates:
-            - Path=/employees/**
+            - Path=/api/employees/**
+          filters:
+            - StripPrefix=1
         - id: payroll-service
           uri: http://localhost:8082
           predicates:
-            - Path=/payroll/**
+            - Path=/api/payroll/**
+          filters:
+            - StripPrefix=1
         - id: attendance-service
           uri: http://localhost:8083
           predicates:
-            - Path=/attendance/**
+            - Path=/api/attendance/**
+          filters:
+            - StripPrefix=1
         - id: notification-service-email
           uri: http://localhost:8084
           predicates:
-            - Path=/send-email
+            - Path=/api/send-email
+          filters:
+            - StripPrefix=1
         - id: notification-service-sms
           uri: http://localhost:8084
           predicates:
-            - Path=/send-sms
+            - Path=/api/send-sms
+          filters:
+            - StripPrefix=1
 
 management:
   endpoints:

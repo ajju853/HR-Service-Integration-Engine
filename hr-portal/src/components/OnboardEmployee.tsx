@@ -4,7 +4,6 @@ import {
   Container, TextField, Button, Typography, Box, Alert, CircularProgress,
   Paper, Table, TableBody, TableCell, TableRow, Snackbar, Fade
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { onboardEmployee } from '../services/api';
 
 const OnboardEmployee: React.FC = () => {
@@ -71,7 +70,7 @@ const OnboardEmployee: React.FC = () => {
         <Fade in={!!result}>
           <Paper sx={{ p: 3, mt: 2, border: '2px solid #4caf50' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <CheckCircleIcon color="success" sx={{ fontSize: 32 }} />
+              <svg viewBox="0 0 24 24" fill="#4caf50" width="32" height="32"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
               <Typography variant="h6" color="success.main">Onboarding Successful</Typography>
             </Box>
             <Table>
